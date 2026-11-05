@@ -1,4 +1,4 @@
-import { PHYSICS, PLAYER } from "./config.js";
+import { ATTACK, PHYSICS, PLAYER } from "./config.js";
 
 const EPSILON = 0.001;
 
@@ -13,6 +13,29 @@ export function createPlayer(x, y) {
     facing: 1,
     onGround: false,
     walkTime: 0,
+    hearts: PLAYER.maxHearts,
+    maxHearts: PLAYER.maxHearts,
+    invuln: 0,
+    attackTimer: -1,
+    attackCooldown: 0,
+    attackHits: new Set(),
+    dead: false,
+  };
+}
+
+export function isAttackActive(player) {
+  return (
+    player.attackTimer >= ATTACK.hitStart &&
+    player.attackTimer <= ATTACK.hitEnd
+  );
+}
+
+export function getAttackBox(player) {
+  return {
+    x: player.facing > 0 ? player.x + player.width : player.x - ATTACK.width,
+    y: player.y + (player.height - ATTACK.height) / 2,
+    width: ATTACK.width,
+    height: ATTACK.height,
   };
 }
 
@@ -30,6 +53,21 @@ function overlaps(a, b) {
 
 // 先水平、后垂直的 AABB 碰撞；平台四边均可阻挡，顶部可站立。
 export function updatePlayer(player, input, level, dt) {
+  player.invuln = Math.max(0, player.invuln - dt);
+  player.attackCooldown = Math.max(0, player.attackCooldown - dt);
+
+  if (player.attackTimer >= 0) {
+    player.attackTimer += dt;
+    if (player.attackTimer >= ATTACK.duration) {
+      player.attackTimer = -1;
+    }
+  }
+
+  if (player.dead) {
+    player.vx = 0;
+    return;
+  }
+
   const axis = input.horizontal();
   const targetSpeed = axis * PLAYER.maxSpeed;
 
@@ -50,6 +88,12 @@ export function updatePlayer(player, input, level, dt) {
 
   if (axis !== 0) {
     player.facing = axis;
+  }
+
+  if (input.wasPressed("attack") && player.attackCooldown <= 0) {
+    player.attackTimer = 0;
+    player.attackCooldown = ATTACK.cooldown;
+    player.attackHits = new Set();
   }
 
   if (input.wasPressed("jump") && player.onGround) {

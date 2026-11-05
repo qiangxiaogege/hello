@@ -7,6 +7,7 @@ const KEY_BINDINGS = {
   ArrowRight: "right",
   KeyD: "right",
   Space: "jump",
+  KeyJ: "attack",
 };
 
 export function createInput(target = window) {
