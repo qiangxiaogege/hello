@@ -16,7 +16,19 @@ export function createPlayer(x, y) {
   };
 }
 
-// 水平加速/摩擦 → 起跳 → 重力 → 移动 → 平台顶部落地。
+function overlapsHorizontally(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x;
+}
+
+function overlaps(a, b) {
+  return (
+    overlapsHorizontally(a, b) &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}
+
+// 先水平、后垂直的 AABB 碰撞；平台四边均可阻挡，顶部可站立。
 export function updatePlayer(player, input, level, dt) {
   const axis = input.horizontal();
   const targetSpeed = axis * PLAYER.maxSpeed;
@@ -47,38 +59,58 @@ export function updatePlayer(player, input, level, dt) {
 
   player.vy = Math.min(player.vy + PHYSICS.gravity * dt, PHYSICS.maxFallSpeed);
 
+  // 水平移动，撞到平台侧面时贴边停下。
   player.x += player.vx * dt;
-  const maxX = level.width - player.width;
-  if (player.x < 0) {
-    player.x = 0;
+  for (const platform of level.platforms) {
+    if (!overlaps(player, platform)) {
+      continue;
+    }
+
+    if (player.vx > 0) {
+      player.x = platform.x - player.width;
+    } else if (player.vx < 0) {
+      player.x = platform.x + platform.width;
+    }
+    player.vx = 0;
+  }
+
+  const minX = level.bounds.minX;
+  const maxX = level.bounds.maxX - player.width;
+  if (player.x < minX) {
+    player.x = minX;
     player.vx = 0;
   } else if (player.x > maxX) {
     player.x = maxX;
     player.vx = 0;
   }
 
+  // 垂直移动：下落时贴合平台顶部，上升时撞到底部停下。
+  const previousTop = player.y;
   const previousBottom = player.y + player.height;
   player.y += player.vy * dt;
   player.onGround = false;
 
-  if (player.vy >= 0) {
-    for (const platform of level.platforms) {
-      const overlapsHorizontally =
-        player.x + player.width > platform.x &&
-        player.x < platform.x + platform.width;
-      if (!overlapsHorizontally) {
-        continue;
-      }
+  for (const platform of level.platforms) {
+    if (!overlapsHorizontally(player, platform)) {
+      continue;
+    }
 
-      const bottom = player.y + player.height;
-      if (
-        previousBottom <= platform.y + EPSILON &&
-        bottom >= platform.y
-      ) {
-        player.y = platform.y - player.height;
-        player.vy = 0;
-        player.onGround = true;
-      }
+    const bottom = player.y + player.height;
+    if (
+      player.vy >= 0 &&
+      previousBottom <= platform.y + EPSILON &&
+      bottom >= platform.y
+    ) {
+      player.y = platform.y - player.height;
+      player.vy = 0;
+      player.onGround = true;
+    } else if (
+      player.vy < 0 &&
+      previousTop >= platform.y + platform.height - EPSILON &&
+      player.y <= platform.y + platform.height
+    ) {
+      player.y = platform.y + platform.height;
+      player.vy = 0;
     }
   }
 
