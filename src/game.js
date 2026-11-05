@@ -17,6 +17,10 @@ function overlaps(a, b) {
   );
 }
 
+function countAlive(enemies) {
+  return enemies.reduce((total, enemy) => total + (enemy.alive ? 1 : 0), 0);
+}
+
 function spawnDeathParticles(game, enemy) {
   for (let i = 0; i < 12; i += 1) {
     const angle = Math.random() * Math.PI * 2;
@@ -102,26 +106,82 @@ function updateCombat(game) {
   }
 }
 
-// 世界状态。T2 玩家、T3 相机、T4 敌人、T5 战斗与生命值。
+function resetRun(game) {
+  const level = game.level;
+
+  game.player = createPlayer(level.spawn.x, level.spawn.y);
+  game.enemies = level.enemySpawns.map((spawn) => createEnemy(spawn));
+  game.particles = [];
+  game.camera = createCamera();
+  game.time = 0;
+  game.portalActive = false;
+  game.state = "playing";
+}
+
+// 开始界面：等待 Enter 或点击。开始后重置整局，不刷新页面。
+export function startGame(game) {
+  if (game.state === "start") {
+    resetRun(game);
+  }
+}
+
+// 胜利/失败后重开：同样只重置本局状态。
+export function restartGame(game) {
+  if (game.state === "won" || game.state === "lost") {
+    resetRun(game);
+  }
+}
+
+// 世界状态与流程：start → playing → won / lost → playing。
 export function createGame() {
   const level = createLevel();
-  const player = createPlayer(level.spawn.x, level.spawn.y);
-
-  return {
+  const game = {
     level,
-    player,
-    enemies: level.enemySpawns.map((spawn) => createEnemy(spawn)),
+    player: null,
+    enemies: [],
     particles: [],
     camera: createCamera(),
     time: 0,
+    state: "start",
+    portalActive: false,
   };
+
+  resetRun(game);
+  game.state = "start";
+  return game;
 }
 
 export function updateGame(game, input, dt) {
+  if (game.state === "start") {
+    if (input.wasPressed("start")) {
+      startGame(game);
+    }
+    return;
+  }
+
+  if (game.state === "won" || game.state === "lost") {
+    if (input.wasPressed("start") || input.wasPressed("restart")) {
+      restartGame(game);
+    }
+    return;
+  }
+
   game.time += dt;
   updatePlayer(game.player, input, game.level, dt);
   updateEnemies(game.enemies, game.player, game.level, dt);
   updateCombat(game);
   updateParticles(game, dt);
   updateCamera(game.camera, game.player, game.level, dt);
+
+  game.portalActive = countAlive(game.enemies) === 0;
+
+  if (game.portalActive && overlaps(game.player, game.level.portal)) {
+    game.state = "won";
+  } else if (game.player.dead) {
+    game.state = "lost";
+  }
+}
+
+export function getRemainingEnemies(game) {
+  return countAlive(game.enemies);
 }

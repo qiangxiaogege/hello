@@ -8,6 +8,8 @@ const KEY_BINDINGS = {
   KeyD: "right",
   Space: "jump",
   KeyJ: "attack",
+  Enter: "start",
+  KeyR: "restart",
 };
 
 export function createInput(target = window) {

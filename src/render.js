@@ -157,6 +157,59 @@ function drawWorld(ctx, level) {
   }
 }
 
+// 关卡尽头的传送门：未清场时昏暗，清场后发光并显示提示。
+function drawPortal(ctx, game) {
+  const portal = game.level.portal;
+  const active = game.portalActive;
+  const pulse = 0.5 + 0.5 * Math.sin(game.time * 5);
+  const cx = portal.x + portal.width / 2;
+
+  // 石制外框
+  ctx.fillStyle = COLORS.stoneShadow;
+  ctx.fillRect(portal.x - 8, portal.y - 8, portal.width + 16, portal.height + 8);
+  ctx.fillStyle = COLORS.stoneDark;
+  ctx.fillRect(portal.x - 6, portal.y - 6, portal.width + 12, portal.height + 6);
+  ctx.fillStyle = COLORS.stone;
+  ctx.fillRect(portal.x - 4, portal.y - 4, portal.width + 8, 8);
+  ctx.fillStyle = COLORS.stoneLight;
+  ctx.fillRect(portal.x - 4, portal.y - 4, portal.width + 8, 2);
+
+  // 门内
+  ctx.fillStyle = COLORS.portalDeep;
+  ctx.fillRect(portal.x, portal.y, portal.width, portal.height);
+
+  if (active) {
+    const cy = portal.y + portal.height / 2;
+
+    ctx.save();
+    ctx.globalAlpha = 0.3 + 0.4 * pulse;
+    ctx.fillStyle = COLORS.portalGlow;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, portal.width * 0.34, portal.height * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 0.55 + 0.35 * pulse;
+    ctx.fillStyle = COLORS.portalCore;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, portal.width * 0.16, portal.height * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(12, 24, 34, 0.75)";
+    ctx.fillText("进入传送门", cx + 1, portal.y - 15);
+    ctx.fillStyle = "#eaffff";
+    ctx.fillText("进入传送门", cx, portal.y - 16);
+    ctx.textAlign = "start";
+  } else {
+    ctx.fillStyle = "rgba(90, 110, 140, 0.22)";
+    for (let y = portal.y + 14; y < portal.y + portal.height; y += 20) {
+      ctx.fillRect(portal.x + 12, y, portal.width - 24, 2);
+    }
+  }
+}
+
 function drawLeg(ctx, x, y, width, height) {
   ctx.fillStyle = "#243c63";
   ctx.fillRect(x, y, width, height);
@@ -385,6 +438,113 @@ function drawHud(ctx, game) {
   for (let i = 0; i < game.player.maxHearts; i += 1) {
     drawHeart(ctx, 28 + i * 30, 24, i < game.player.hearts);
   }
+
+  const remaining = game.enemies.filter((enemy) => enemy.alive).length;
+  const label = `剩余蘑菇 ${remaining}/8`;
+
+  ctx.fillStyle = "rgba(12, 26, 36, 0.32)";
+  ctx.fillRect(LOGICAL_WIDTH - 236, 16, 212, 40);
+
+  ctx.font =
+    "bold 22px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "rgba(10, 22, 32, 0.75)";
+  ctx.fillText(label, LOGICAL_WIDTH - 27, 37);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(label, LOGICAL_WIDTH - 28, 36);
+
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
+}
+
+function drawStartScreen(ctx, game) {
+  ctx.fillStyle = "rgba(8, 20, 28, 0.55)";
+  ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+  ctx.fillStyle = "rgba(12, 32, 46, 0.72)";
+  ctx.fillRect(240, 150, 800, 420);
+  ctx.strokeStyle = "rgba(160, 220, 245, 0.45)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(240, 150, 800, 420);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font =
+    "bold 68px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = "rgba(8, 20, 28, 0.8)";
+  ctx.fillText("蘑菇训练场", LOGICAL_WIDTH / 2 + 4, 240 + 4);
+  ctx.fillStyle = "#eaf7ff";
+  ctx.fillText("蘑菇训练场", LOGICAL_WIDTH / 2, 240);
+
+  ctx.font =
+    "bold 24px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = "#a9dcf5";
+  ctx.fillText("单关横版动作小游戏", LOGICAL_WIDTH / 2, 300);
+
+  ctx.font =
+    "22px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(
+    "← → / A D 移动      Space 跳跃      J 攻击",
+    LOGICAL_WIDTH / 2,
+    392
+  );
+  ctx.fillText(
+    "消灭全部 8 只蘑菇怪，走进传送门通关",
+    LOGICAL_WIDTH / 2,
+    432
+  );
+
+  ctx.font =
+    "bold 24px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = "#ffe08a";
+  ctx.fillText("按 Enter 或点击画面开始", LOGICAL_WIDTH / 2, 512);
+
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
+}
+
+function drawEndScreen(ctx, game) {
+  const won = game.state === "won";
+  const remaining = game.enemies.filter((enemy) => enemy.alive).length;
+
+  ctx.fillStyle = "rgba(6, 14, 22, 0.62)";
+  ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+  ctx.fillStyle = "rgba(12, 30, 44, 0.78)";
+  ctx.fillRect(340, 190, 600, 330);
+  ctx.strokeStyle = won ? "rgba(126, 240, 190, 0.6)" : "rgba(255, 155, 143, 0.6)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(340, 190, 600, 330);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font =
+    "bold 72px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = won ? "#8ef0c0" : "#ff9b8f";
+  ctx.fillText(won ? "通关！" : "失败", LOGICAL_WIDTH / 2, 280);
+
+  ctx.font =
+    "bold 26px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(`用时 ${game.time.toFixed(1)} 秒`, LOGICAL_WIDTH / 2, 355);
+  ctx.fillText(`剩余蘑菇 ${remaining}/8`, LOGICAL_WIDTH / 2, 398);
+
+  ctx.font =
+    "bold 22px 'Noto Sans CJK SC', 'Microsoft YaHei', 'PingFang SC', sans-serif";
+  ctx.fillStyle = "#ffe08a";
+  ctx.fillText(
+    "按 R / Enter 或点击画面重开",
+    LOGICAL_WIDTH / 2,
+    468
+  );
+
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
 }
 
 function drawParticles(ctx, particles) {
@@ -411,6 +571,8 @@ export function render(ctx, game) {
   ctx.save();
   ctx.translate(-cameraX, 0);
   drawWorld(ctx, game.level);
+  drawPortal(ctx, game);
+
   for (const enemy of game.enemies) {
     if (enemy.alive) {
       drawMushroom(ctx, enemy);
@@ -426,5 +588,13 @@ export function render(ctx, game) {
   drawParticles(ctx, game.particles);
   ctx.restore();
 
-  drawHud(ctx, game);
+  if (game.state !== "start") {
+    drawHud(ctx, game);
+  }
+
+  if (game.state === "start") {
+    drawStartScreen(ctx, game);
+  } else if (game.state === "won" || game.state === "lost") {
+    drawEndScreen(ctx, game);
+  }
 }

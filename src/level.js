@@ -35,6 +35,12 @@ export const LEVEL = {
     { x: 2300, y: GROUND_TOP },
     { x: 2420, y: GROUND_TOP },
   ],
+  portal: {
+    x: 2460,
+    y: GROUND_TOP - 112,
+    width: 72,
+    height: 112,
+  },
   walls: [
     { x: 0, y: GROUND_TOP - 130, width: WALL_WIDTH, height: 130 },
     {
