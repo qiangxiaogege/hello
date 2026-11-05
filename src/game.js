@@ -98,6 +98,8 @@ function updateCombat(game) {
     player.vx = direction * PLAYER.hurtKnockback;
     player.vy = -PLAYER.hurtLift;
     player.onGround = false;
+    game.shakeTime = 0.18;
+    game.hurtFlash = 0.12;
 
     if (player.hearts <= 0) {
       player.dead = true;
@@ -115,6 +117,8 @@ function resetRun(game) {
   game.camera = createCamera();
   game.time = 0;
   game.portalActive = false;
+  game.shakeTime = 0;
+  game.hurtFlash = 0;
   game.state = "playing";
 }
 
@@ -144,6 +148,8 @@ export function createGame() {
     time: 0,
     state: "start",
     portalActive: false,
+    shakeTime: 0,
+    hurtFlash: 0,
   };
 
   resetRun(game);
@@ -167,6 +173,8 @@ export function updateGame(game, input, dt) {
   }
 
   game.time += dt;
+  game.shakeTime = Math.max(0, game.shakeTime - dt);
+  game.hurtFlash = Math.max(0, game.hurtFlash - dt);
   updatePlayer(game.player, input, game.level, dt);
   updateEnemies(game.enemies, game.player, game.level, dt);
   updateCombat(game);
