@@ -78,4 +78,7 @@ export const COLORS = {
   mushroomBodyDark: "#d1b585",
   mushroomFeet: "#6b4630",
   outline: "#3a2620",
+  portalDeep: "#16243a",
+  portalGlow: "#6fe7ff",
+  portalCore: "#d5f9ff",
 };
