@@ -18,6 +18,16 @@ export const PLAYER = {
   jumpSpeed: 800,
 };
 
+// 蘑菇怪：巡逻/追击速度、发现距离与生命值（第 6 节初稿）。
+export const ENEMY = {
+  width: 44,
+  height: 44,
+  maxHp: 3,
+  patrolSpeed: 55,
+  chaseSpeed: 110,
+  detectRange: 340,
+};
+
 export const PHYSICS = {
   gravity: 2200,
   maxFallSpeed: 1300,
@@ -46,4 +56,10 @@ export const COLORS = {
   stoneLight: "#c3ccda",
   stoneDark: "#6b778c",
   stoneShadow: "#59647a",
+  mushroomCap: "#d9534f",
+  mushroomSpot: "#fff4d6",
+  mushroomBody: "#f4dfb2",
+  mushroomBodyDark: "#d1b585",
+  mushroomFeet: "#6b4630",
+  outline: "#3a2620",
 };

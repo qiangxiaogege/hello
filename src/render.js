@@ -259,6 +259,76 @@ function drawKnight(ctx, player) {
   ctx.restore();
 }
 
+// 原创蘑菇怪：红伞白点、米色身体，全部用基本图形绘制。
+function drawMushroom(ctx, enemy) {
+  const chasing = enemy.state === "chase";
+  const walking = enemy.onGround && Math.abs(enemy.vx) > 1;
+  const step = walking ? Math.sin(enemy.animTime * (chasing ? 16 : 10)) : 0;
+  const bob = walking ? Math.round(Math.abs(step)) : 0;
+  const legOffset = Math.round(step * 2);
+  const flash = enemy.hitFlash > 0;
+  const cap = flash ? "#ffffff" : COLORS.mushroomCap;
+  const body = flash ? "#fff6ea" : COLORS.mushroomBody;
+  const bodyDark = flash ? "#ffe9d0" : COLORS.mushroomBodyDark;
+  const outline = flash ? "#d9b9a8" : COLORS.outline;
+
+  ctx.save();
+  ctx.translate(
+    Math.round(enemy.x) + enemy.width / 2,
+    Math.round(enemy.y) - bob
+  );
+  ctx.scale(enemy.facing, 1);
+  ctx.translate(-enemy.width / 2, 0);
+
+  if (enemy.onGround) {
+    ctx.fillStyle = "rgba(24, 39, 31, 0.18)";
+    ctx.beginPath();
+    ctx.ellipse(22, 44, 16, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 双脚
+  ctx.fillStyle = flash ? "#eeeeee" : COLORS.mushroomFeet;
+  ctx.fillRect(9 + legOffset, 38, 9, 6);
+  ctx.fillRect(26 - legOffset, 38, 9, 6);
+
+  // 身体与脸
+  ctx.fillStyle = outline;
+  ctx.fillRect(9, 18, 26, 23);
+  ctx.fillStyle = body;
+  ctx.fillRect(11, 20, 22, 18);
+  ctx.fillStyle = bodyDark;
+  ctx.fillRect(11, 34, 22, 4);
+
+  ctx.fillStyle = "#2c1f1a";
+  ctx.fillRect(15, 25, 4, 5);
+  ctx.fillRect(25, 25, 4, 5);
+  ctx.fillRect(20, 32, 4, 2);
+
+  // 伞盖描边与伞面
+  ctx.fillStyle = outline;
+  ctx.fillRect(3, 11, 38, 13);
+  ctx.fillRect(7, 7, 30, 6);
+  ctx.fillRect(12, 3, 20, 5);
+
+  ctx.fillStyle = cap;
+  ctx.fillRect(5, 12, 34, 10);
+  ctx.fillRect(9, 8, 26, 5);
+  ctx.fillRect(14, 4, 16, 4);
+
+  // 白色斑点
+  ctx.fillStyle = flash ? "#ffffff" : COLORS.mushroomSpot;
+  ctx.fillRect(9, 10, 7, 6);
+  ctx.fillRect(25, 8, 7, 6);
+  ctx.fillRect(32, 15, 5, 4);
+
+  // 伞盖下沿
+  ctx.fillStyle = outline;
+  ctx.fillRect(5, 21, 34, 2);
+
+  ctx.restore();
+}
+
 export function render(ctx, game) {
   const cameraX = Math.round(game.camera.x);
 
@@ -269,6 +339,11 @@ export function render(ctx, game) {
   ctx.save();
   ctx.translate(-cameraX, 0);
   drawWorld(ctx, game.level);
+  for (const enemy of game.enemies) {
+    if (enemy.alive) {
+      drawMushroom(ctx, enemy);
+    }
+  }
   drawKnight(ctx, game.player);
   ctx.restore();
 }

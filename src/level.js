@@ -25,6 +25,16 @@ export const LEVEL = {
     { type: "stone", x: 1200, y: 390, width: 160, height: 24 },
     { type: "stone", x: 1840, y: 500, width: 260, height: 24 },
   ],
+  enemySpawns: [
+    { x: 300, y: GROUND_TOP },
+    { x: 650, y: GROUND_TOP },
+    { x: 1000, y: 500 },
+    { x: 1250, y: 390 },
+    { x: 1300, y: GROUND_TOP },
+    { x: 1900, y: GROUND_TOP },
+    { x: 2300, y: GROUND_TOP },
+    { x: 2420, y: GROUND_TOP },
+  ],
   walls: [
     { x: 0, y: GROUND_TOP - 130, width: WALL_WIDTH, height: 130 },
     {
