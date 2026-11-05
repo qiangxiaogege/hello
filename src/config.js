@@ -23,12 +23,27 @@ export const PHYSICS = {
   maxFallSpeed: 1300,
 };
 
+// 相机：水平跟随玩家，带少量前瞻，并钳制在关卡范围内。
+export const CAMERA = {
+  lookahead: 110,
+  followSpeed: 8,
+};
+
 export const COLORS = {
   skyTop: "#5eb6e8",
   skyMid: "#9bd8f2",
   skyBottom: "#dff3fb",
+  hillFar: "#8fd0ad",
+  hillNear: "#63b483",
+  cloud: "#f4fbff",
   grass: "#5fbf5a",
   grassDark: "#3f9a45",
+  grassLight: "#88d96b",
   dirt: "#8a5a3b",
   dirtDark: "#6f452b",
+  dirtLight: "#a06a44",
+  stone: "#94a0b4",
+  stoneLight: "#c3ccda",
+  stoneDark: "#6b778c",
+  stoneShadow: "#59647a",
 };
