@@ -6,8 +6,22 @@ export const LOGICAL_HEIGHT = 720;
 export const FIXED_STEP = 1 / 60;
 export const MAX_FRAME_TIME = 0.1;
 
-// 场景常量。当前只用于 T1 的占位天空与地面，T3 展开为完整关卡。
-export const GROUND_TOP = 620;
+// 玩家物理与手感常量（第 6 节初稿，可在 T7 微调）。
+export const PLAYER = {
+  width: 40,
+  height: 56,
+  maxSpeed: 300,
+  acceleration: 2400,
+  friction: 2600,
+  airAcceleration: 1700,
+  airFriction: 400,
+  jumpSpeed: 800,
+};
+
+export const PHYSICS = {
+  gravity: 2200,
+  maxFallSpeed: 1300,
+};
 
 export const COLORS = {
   skyTop: "#5eb6e8",

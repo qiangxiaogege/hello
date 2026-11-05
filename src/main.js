@@ -4,6 +4,8 @@ import {
   LOGICAL_WIDTH,
   MAX_FRAME_TIME,
 } from "./config.js";
+import { createGame, updateGame } from "./game.js";
+import { createInput } from "./input.js";
 import { render } from "./render.js";
 
 const canvas = document.getElementById("game");
@@ -11,14 +13,17 @@ const ctx = canvas.getContext("2d");
 
 ctx.imageSmoothingEnabled = false;
 
+const input = createInput();
+const game = createGame();
+
 let accumulator = 0;
 let lastTime = 0;
 let frameId = 0;
 
-// T1 还是空的世界更新；T2 起在这里推进玩家与环境状态。
-// 固定步长保证不同刷新率下的手感一致。
-function update(_dt) {
-  // 后续任务填充。
+// 固定步长推进世界，保证不同刷新率下手感一致。
+function update(dt) {
+  updateGame(game, input, dt);
+  input.endStep();
 }
 
 function frame(now) {
@@ -39,7 +44,7 @@ function frame(now) {
     accumulator -= FIXED_STEP;
   }
 
-  render(ctx);
+  render(ctx, game);
   frameId = requestAnimationFrame(frame);
 }
 
