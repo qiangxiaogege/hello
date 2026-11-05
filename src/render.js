@@ -43,11 +43,26 @@ function drawHills(ctx, cameraX) {
 }
 
 function drawCloud(ctx, x, y, scale) {
-  ctx.beginPath();
-  ctx.ellipse(x, y, 46 * scale, 17 * scale, 0, 0, Math.PI * 2);
-  ctx.ellipse(x + 36 * scale, y - 9 * scale, 28 * scale, 15 * scale, 0, 0, Math.PI * 2);
-  ctx.ellipse(x - 38 * scale, y + 4 * scale, 25 * scale, 12 * scale, 0, 0, Math.PI * 2);
-  ctx.fill();
+  const puffs = [
+    [0, 0, 46, 17],
+    [36, -9, 28, 15],
+    [-38, 4, 25, 12],
+  ];
+
+  // 每个圆单独填充，避免多段路径叠加出现接缝。
+  for (const [dx, dy, rx, ry] of puffs) {
+    ctx.beginPath();
+    ctx.ellipse(
+      x + dx * scale,
+      y + dy * scale,
+      rx * scale,
+      ry * scale,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
 }
 
 function drawClouds(ctx, cameraX) {
@@ -163,6 +178,16 @@ function drawPortal(ctx, game) {
   const active = game.portalActive;
   const pulse = 0.5 + 0.5 * Math.sin(game.time * 5);
   const cx = portal.x + portal.width / 2;
+  const cy = portal.y + portal.height / 2;
+
+  if (active) {
+    const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 110);
+    glow.addColorStop(0, "rgba(111, 231, 255, 0.32)");
+    glow.addColorStop(0.6, "rgba(111, 231, 255, 0.12)");
+    glow.addColorStop(1, "rgba(111, 231, 255, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(cx - 110, cy - 110, 220, 220);
+  }
 
   // 石制外框
   ctx.fillStyle = COLORS.stoneShadow;
@@ -179,8 +204,6 @@ function drawPortal(ctx, game) {
   ctx.fillRect(portal.x, portal.y, portal.width, portal.height);
 
   if (active) {
-    const cy = portal.y + portal.height / 2;
-
     ctx.save();
     ctx.globalAlpha = 0.3 + 0.4 * pulse;
     ctx.fillStyle = COLORS.portalGlow;
@@ -345,6 +368,25 @@ function drawKnight(ctx, player) {
     ctx.fillRect(30, 38 + armOffset, 7, 4);
   }
 
+  if (
+    player.attackTimer >= ATTACK.hitStart &&
+    player.attackTimer <= ATTACK.hitEnd + 0.04
+  ) {
+    const progress =
+      (player.attackTimer - ATTACK.hitStart) /
+      (ATTACK.hitEnd - ATTACK.hitStart + 0.04);
+
+    ctx.save();
+    ctx.globalAlpha = 0.3 * (1 - progress * 0.5);
+    ctx.strokeStyle = "#eaf7ff";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc(24, 30, 52, -0.85 + progress * 0.65, 0.15 + progress * 0.65);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   drawSword(ctx, player);
 
   ctx.restore();
@@ -364,6 +406,9 @@ function drawMushroom(ctx, enemy) {
   const outline = flash ? "#d9b9a8" : COLORS.outline;
 
   ctx.save();
+  if (!enemy.alive) {
+    ctx.globalAlpha = Math.max(0, enemy.fade / 0.3);
+  }
   ctx.translate(
     Math.round(enemy.x) + enemy.width / 2,
     Math.round(enemy.y) - bob
@@ -460,10 +505,10 @@ function drawHud(ctx, game) {
 }
 
 function drawStartScreen(ctx, game) {
-  ctx.fillStyle = "rgba(8, 20, 28, 0.55)";
+  ctx.fillStyle = "rgba(8, 20, 28, 0.56)";
   ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
-  ctx.fillStyle = "rgba(12, 32, 46, 0.72)";
+  ctx.fillStyle = "rgba(12, 32, 46, 0.88)";
   ctx.fillRect(240, 150, 800, 420);
   ctx.strokeStyle = "rgba(160, 220, 245, 0.45)";
   ctx.lineWidth = 2;
@@ -568,13 +613,21 @@ export function render(ctx, game) {
   drawHills(ctx, cameraX);
   drawClouds(ctx, cameraX);
 
+  const shakeStrength = game.shakeTime > 0 ? (game.shakeTime / 0.18) * 5 : 0;
+  const shakeX = shakeStrength
+    ? Math.round((Math.random() * 2 - 1) * shakeStrength)
+    : 0;
+  const shakeY = shakeStrength
+    ? Math.round((Math.random() * 2 - 1) * shakeStrength)
+    : 0;
+
   ctx.save();
-  ctx.translate(-cameraX, 0);
+  ctx.translate(-cameraX + shakeX, shakeY);
   drawWorld(ctx, game.level);
   drawPortal(ctx, game);
 
   for (const enemy of game.enemies) {
-    if (enemy.alive) {
+    if (enemy.alive || enemy.fade > 0) {
       drawMushroom(ctx, enemy);
     }
   }
@@ -587,6 +640,13 @@ export function render(ctx, game) {
 
   drawParticles(ctx, game.particles);
   ctx.restore();
+
+  if (game.hurtFlash > 0) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${
+      0.18 * (game.hurtFlash / 0.12)
+    })`;
+    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  }
 
   if (game.state !== "start") {
     drawHud(ctx, game);

@@ -16,6 +16,7 @@ export function createEnemy(spawn) {
     hp: ENEMY.maxHp,
     maxHp: ENEMY.maxHp,
     alive: true,
+    fade: 0,
     hitFlash: 0,
     hitStun: 0,
     knockbackVx: 0,
@@ -36,6 +37,7 @@ export function damageEnemy(enemy, direction, damage) {
 
   if (enemy.hp <= 0) {
     enemy.alive = false;
+    enemy.fade = 0.3;
     enemy.vx = 0;
     enemy.vy = 0;
     return true;
@@ -64,6 +66,9 @@ function hasGroundAhead(enemy, level, direction) {
 
 export function updateEnemy(enemy, player, level, dt) {
   if (!enemy.alive) {
+    if (enemy.fade > 0) {
+      enemy.fade = Math.max(0, enemy.fade - dt);
+    }
     return;
   }
 
