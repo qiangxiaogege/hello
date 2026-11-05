@@ -1,4 +1,4 @@
-import { COLORS, LOGICAL_HEIGHT, LOGICAL_WIDTH } from "./config.js";
+import { ATTACK, COLORS, LOGICAL_HEIGHT, LOGICAL_WIDTH } from "./config.js";
 import { GROUND_TOP, WORLD_WIDTH } from "./level.js";
 
 // T3 绘制完整关卡：天空、两层视差（远山 0.3×、云 0.5×）、
@@ -165,6 +165,42 @@ function drawLeg(ctx, x, y, width, height) {
   ctx.fillRect(x - 1, y + height - 4, width + 2, 4);
 }
 
+// 近战挥砍：前摇抬剑、命中帧前挥、收招下压。判定框与剑身同期生效。
+function drawSword(ctx, player) {
+  if (player.attackTimer < 0) {
+    return;
+  }
+
+  const t = player.attackTimer;
+  let angle;
+  if (t < ATTACK.hitStart) {
+    angle = -2.1 + (t / ATTACK.hitStart) * 0.9;
+  } else if (t <= ATTACK.hitEnd) {
+    angle =
+      -1.2 +
+      ((t - ATTACK.hitStart) / (ATTACK.hitEnd - ATTACK.hitStart)) * 1.0;
+  } else {
+    angle =
+      -0.2 +
+      ((t - ATTACK.hitEnd) / (ATTACK.duration - ATTACK.hitEnd)) * 1.2;
+  }
+
+  ctx.save();
+  ctx.translate(28, 30);
+  ctx.rotate(angle);
+
+  ctx.fillStyle = "#5a4636";
+  ctx.fillRect(-7, -3, 9, 6);
+  ctx.fillStyle = "#dfe8f5";
+  ctx.fillRect(2, -3, 58, 6);
+  ctx.fillStyle = "#f7fbff";
+  ctx.fillRect(2, -3, 58, 2);
+  ctx.fillStyle = "#9fb0c6";
+  ctx.fillRect(60, -2, 5, 4);
+
+  ctx.restore();
+}
+
 // 原创小骑士占位角色：全部用基本图形绘制，不加载任何素材。
 function drawKnight(ctx, player) {
   const walking = player.onGround && Math.abs(player.vx) > 10;
@@ -256,6 +292,8 @@ function drawKnight(ctx, player) {
     ctx.fillRect(30, 38 + armOffset, 7, 4);
   }
 
+  drawSword(ctx, player);
+
   ctx.restore();
 }
 
@@ -329,6 +367,40 @@ function drawMushroom(ctx, enemy) {
   ctx.restore();
 }
 
+function drawHeart(ctx, x, y, filled) {
+  ctx.fillStyle = filled ? "#e5544b" : "rgba(20, 30, 42, 0.45)";
+  ctx.fillRect(x + 4, y, 6, 3);
+  ctx.fillRect(x + 14, y, 6, 3);
+  ctx.fillRect(x, y + 3, 24, 9);
+  ctx.fillRect(x + 3, y + 12, 18, 5);
+  ctx.fillRect(x + 7, y + 17, 10, 3);
+
+  if (filled) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+    ctx.fillRect(x + 5, y + 3, 4, 3);
+  }
+}
+
+function drawHud(ctx, game) {
+  for (let i = 0; i < game.player.maxHearts; i += 1) {
+    drawHeart(ctx, 28 + i * 30, 24, i < game.player.hearts);
+  }
+}
+
+function drawParticles(ctx, particles) {
+  for (const particle of particles) {
+    ctx.globalAlpha = Math.max(0, particle.life / particle.maxLife);
+    ctx.fillStyle = particle.color;
+    ctx.fillRect(
+      Math.round(particle.x - particle.size / 2),
+      Math.round(particle.y - particle.size / 2),
+      particle.size,
+      particle.size
+    );
+  }
+  ctx.globalAlpha = 1;
+}
+
 export function render(ctx, game) {
   const cameraX = Math.round(game.camera.x);
 
@@ -344,6 +416,15 @@ export function render(ctx, game) {
       drawMushroom(ctx, enemy);
     }
   }
-  drawKnight(ctx, game.player);
+
+  const flicker =
+    game.player.invuln > 0 && Math.floor(game.player.invuln * 16) % 2 === 0;
+  if (!flicker) {
+    drawKnight(ctx, game.player);
+  }
+
+  drawParticles(ctx, game.particles);
   ctx.restore();
+
+  drawHud(ctx, game);
 }

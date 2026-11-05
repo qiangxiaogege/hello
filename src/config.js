@@ -16,6 +16,22 @@ export const PLAYER = {
   airAcceleration: 1700,
   airFriction: 400,
   jumpSpeed: 800,
+  maxHearts: 3,
+  invulnTime: 1.2,
+  hurtKnockback: 320,
+  hurtLift: 260,
+};
+
+// 近战攻击：前摇/命中/收招、冷却与判定框（第 6 节初稿）。
+export const ATTACK = {
+  duration: 0.28,
+  hitStart: 0.08,
+  hitEnd: 0.18,
+  cooldown: 0.32,
+  width: 52,
+  height: 40,
+  damage: 1,
+  knockback: 240,
 };
 
 // 蘑菇怪：巡逻/追击速度、发现距离与生命值（第 6 节初稿）。
