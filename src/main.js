@@ -4,7 +4,7 @@ import {
   LOGICAL_WIDTH,
   MAX_FRAME_TIME,
 } from "./config.js";
-import { createGame, updateGame } from "./game.js";
+import { createGame, restartGame, startGame, updateGame } from "./game.js";
 import { createInput } from "./input.js";
 import { render } from "./render.js";
 
@@ -15,6 +15,15 @@ ctx.imageSmoothingEnabled = false;
 
 const input = createInput();
 const game = createGame();
+
+// 开始界面与结算界面支持鼠标点击。
+canvas.addEventListener("click", () => {
+  if (game.state === "start") {
+    startGame(game);
+  } else if (game.state === "won" || game.state === "lost") {
+    restartGame(game);
+  }
+});
 
 let accumulator = 0;
 let lastTime = 0;
